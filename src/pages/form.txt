@@ -1,0 +1,507 @@
+import React, { useState, useEffect } from "react";
+
+const PatientForm = () => {
+  const [formData, setFormData] = useState({
+    // Personal Information
+    name: "",
+    age: "",
+    gender: "",
+    maritalStatus: "",
+    contactNumber: "",
+    emergencyContact: "",
+    address: "",
+    
+    // Medical Information
+    diseaseType: "",
+    previousReport: "",
+    bloodSample: false,
+    bloodPressure: "",
+    sugarLevel: "",
+    weight: "",
+    
+    // Appointment Details
+    tokenNumber: Math.floor(1000 + Math.random() * 9000),
+    opdSlot: "",
+    
+    // Symptoms
+    symptoms: {
+      chestPain: false,
+      fever: false,
+      headache: false,
+      difficultyBreathing: false,
+      abdominalPain: false,
+      fracture: false,
+      unconscious: false,
+      nausea: false,
+      strokeSymptoms: false,
+      burnInjury: false,
+    },
+  });
+
+  const [currentStep, setCurrentStep] = useState("personal");
+  const [currentDateTime, setCurrentDateTime] = useState(new Date());
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isComplete, setIsComplete] = useState(false);
+
+  // Update date & time every second
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentDateTime(new Date());
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    if (type === "checkbox") {
+      if (name in formData.symptoms) {
+        setFormData((prev) => ({
+          ...prev,
+          symptoms: { ...prev.symptoms, [name]: checked },
+        }));
+      } else {
+        setFormData((prev) => ({ ...prev, [name]: checked }));
+      }
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    
+    // Simulate submission delay
+    setTimeout(() => {
+      setIsSubmitting(false);
+      setIsComplete(true);
+      alert(`Patient Registered Successfully! Token: ${formData.tokenNumber}`);
+      // Reset after showing success message
+      setTimeout(() => {
+        setIsComplete(false);
+      }, 3000);
+    }, 1000);
+  };
+
+  const opdSlots = [
+    "09:00 AM - 10:00 AM",
+    "10:00 AM - 11:00 AM",
+    "11:00 AM - 12:00 PM",
+    "12:00 PM - 01:00 PM",
+    "02:00 PM - 03:00 PM",
+    "03:00 PM - 04:00 PM",
+    "04:00 PM - 05:00 PM",
+  ];
+
+  const validateStep = (step) => {
+    switch (step) {
+      case "personal":
+        return formData.name && formData.age && formData.gender && 
+               formData.contactNumber && formData.emergencyContact && formData.address;
+      case "medical":
+        return true; // Medical data is optional
+      case "symptoms":
+        return true; // Symptoms are optional
+      case "appointment":
+        return formData.opdSlot;
+      default:
+        return false;
+    }
+  };
+
+  const moveToNextStep = () => {
+    if (currentStep === "personal") setCurrentStep("medical");
+    else if (currentStep === "medical") setCurrentStep("symptoms");
+    else if (currentStep === "symptoms") setCurrentStep("appointment");
+  };
+
+  const moveToPreviousStep = () => {
+    if (currentStep === "appointment") setCurrentStep("symptoms");
+    else if (currentStep === "symptoms") setCurrentStep("medical");
+    else if (currentStep === "medical") setCurrentStep("personal");
+  };
+
+  // Group symptoms for better display
+  const symptomGroups = {
+    "Pain Symptoms": ["chestPain", "headache", "abdominalPain"],
+    "Urgent Symptoms": ["difficultyBreathing", "unconscious", "strokeSymptoms"],
+    "Injury Symptoms": ["fracture", "burnInjury"],
+    "General Symptoms": ["fever", "nausea"]
+  };
+
+  return (
+    <div className="p-6 bg-white rounded-lg shadow-md max-w-2xl mx-auto">
+      {/* Header with title and token */}
+      <div className="mb-6">
+        <h2 className="text-2xl font-bold text-center mb-2">Patient Registration</h2>
+        
+        <div className="flex justify-between items-center border-b pb-4">
+          <div className="text-gray-600">{currentDateTime.toLocaleString()}</div>
+          <div className="text-blue-600 font-semibold">Token: #{formData.tokenNumber}</div>
+        </div>
+      </div>
+
+      {/* Progress Indicator */}
+      <div className="mb-6">
+        <div className="flex justify-between">
+          <div 
+            className={`text-center flex-1 pb-2 ${currentStep === "personal" 
+              ? "border-b-2 border-blue-500 text-blue-600 font-medium" 
+              : "border-b text-gray-500"}`}
+            onClick={() => setCurrentStep("personal")}
+            style={{cursor: "pointer"}}
+          >
+            Personal
+          </div>
+          <div 
+            className={`text-center flex-1 pb-2 ${currentStep === "medical" 
+              ? "border-b-2 border-blue-500 text-blue-600 font-medium" 
+              : "border-b text-gray-500"}`}
+            onClick={() => setCurrentStep("medical")}
+            style={{cursor: "pointer"}}
+          >
+            Medical
+          </div>
+          <div 
+            className={`text-center flex-1 pb-2 ${currentStep === "symptoms" 
+              ? "border-b-2 border-blue-500 text-blue-600 font-medium" 
+              : "border-b text-gray-500"}`}
+            onClick={() => setCurrentStep("symptoms")}
+            style={{cursor: "pointer"}}
+          >
+            Symptoms
+          </div>
+          <div 
+            className={`text-center flex-1 pb-2 ${currentStep === "appointment" 
+              ? "border-b-2 border-blue-500 text-blue-600 font-medium" 
+              : "border-b text-gray-500"}`}
+            onClick={() => setCurrentStep("appointment")}
+            style={{cursor: "pointer"}}
+          >
+            Appointment
+          </div>
+        </div>
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Personal Information */}
+        {currentStep === "personal" && (
+          <div className="space-y-4">
+            <h3 className="font-semibold text-lg text-gray-700 mb-4">Personal Information</h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Patient Name*</label>
+                <input
+                  type="text"
+                  name="name"
+                  placeholder="Full Name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  className="w-full p-2 border rounded"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Age*</label>
+                <input
+                  type="number"
+                  name="age"
+                  placeholder="Age in years"
+                  value={formData.age}
+                  onChange={handleChange}
+                  className="w-full p-2 border rounded"
+                  required
+                />
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Gender*</label>
+                <select
+                  name="gender"
+                  value={formData.gender}
+                  onChange={handleChange}
+                  className="w-full p-2 border rounded"
+                  required
+                >
+                  <option value="">Select Gender</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Marital Status</label>
+                <select
+                  name="maritalStatus"
+                  value={formData.maritalStatus}
+                  onChange={handleChange}
+                  className="w-full p-2 border rounded"
+                >
+                  <option value="">Select Marital Status</option>
+                  <option value="Single">Single</option>
+                  <option value="Married">Married</option>
+                  <option value="Divorced">Divorced</option>
+                  <option value="Widowed">Widowed</option>
+                </select>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Contact Number*</label>
+                <input
+                  type="text"
+                  name="contactNumber"
+                  placeholder="Your phone number"
+                  value={formData.contactNumber}
+                  onChange={handleChange}
+                  className="w-full p-2 border rounded"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Emergency Contact*</label>
+                <input
+                  type="text"
+                  name="emergencyContact"
+                  placeholder="Emergency contact number"
+                  value={formData.emergencyContact}
+                  onChange={handleChange}
+                  className="w-full p-2 border rounded"
+                  required
+                />
+              </div>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Address*</label>
+              <input
+                type="text"
+                name="address"
+                placeholder="Full address"
+                value={formData.address}
+                onChange={handleChange}
+                className="w-full p-2 border rounded"
+                required
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Medical Information */}
+        {currentStep === "medical" && (
+          <div className="space-y-4">
+            <h3 className="font-semibold text-lg text-gray-700 mb-4">Medical Information</h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Blood Pressure</label>
+                <input
+                  type="text"
+                  name="bloodPressure"
+                  placeholder="e.g. 120/80"
+                  value={formData.bloodPressure}
+                  onChange={handleChange}
+                  className="w-full p-2 border rounded"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Sugar Level</label>
+                <input
+                  type="text"
+                  name="sugarLevel"
+                  placeholder="e.g. 90 mg/dL"
+                  value={formData.sugarLevel}
+                  onChange={handleChange}
+                  className="w-full p-2 border rounded"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Weight (kg)</label>
+                <input
+                  type="text"
+                  name="weight"
+                  placeholder="Weight in kg"
+                  value={formData.weight}
+                  onChange={handleChange}
+                  className="w-full p-2 border rounded"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Disease Type</label>
+              <input
+                type="text"
+                name="diseaseType"
+                placeholder="Known conditions"
+                value={formData.diseaseType}
+                onChange={handleChange}
+                className="w-full p-2 border rounded"
+              />
+            </div>
+            
+            <div className="flex items-center space-x-2 py-2">
+              <input
+                type="checkbox"
+                id="bloodSample"
+                name="bloodSample"
+                checked={formData.bloodSample}
+                onChange={handleChange}
+                className="h-4 w-4"
+              />
+              <label htmlFor="bloodSample" className="text-sm font-medium text-gray-700">
+                Blood Sample Collected
+              </label>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Previous Medical Records</label>
+              <textarea
+                name="previousReport"
+                placeholder="Previous medical history or reports (if any)"
+                value={formData.previousReport}
+                onChange={handleChange}
+                className="w-full p-2 border rounded h-24"
+              ></textarea>
+            </div>
+          </div>
+        )}
+
+        {/* Symptoms */}
+        {currentStep === "symptoms" && (
+          <div className="space-y-4">
+            <h3 className="font-semibold text-lg text-gray-700 mb-4">Symptoms</h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {Object.entries(symptomGroups).map(([groupName, symptoms]) => (
+                <div key={groupName} className="border rounded p-3">
+                  <h4 className="font-medium text-gray-700 mb-2">{groupName}</h4>
+                  {symptoms.map(symptom => (
+                    <div key={symptom} className="flex items-center mb-2">
+                      <input
+                        type="checkbox"
+                        id={symptom}
+                        name={symptom}
+                        checked={formData.symptoms[symptom]}
+                        onChange={handleChange}
+                        className="h-4 w-4 mr-2"
+                      />
+                      <label htmlFor={symptom} className="text-sm text-gray-700">
+                        {symptom.replace(/([A-Z])/g, " $1").trim()}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Appointment Details */}
+        {currentStep === "appointment" && (
+          <div className="space-y-4">
+            <h3 className="font-semibold text-lg text-gray-700 mb-4">Appointment Details</h3>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">OPD Appointment Slot*</label>
+              <select
+                name="opdSlot"
+                value={formData.opdSlot}
+                onChange={handleChange}
+                className="w-full p-2 border rounded"
+                required
+              >
+                <option value="">Select OPD Slot</option>
+                {opdSlots.map((slot, index) => (
+                  <option key={index} value={slot}>
+                    {slot}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="p-4 bg-blue-50 rounded-lg mt-4">
+              <h4 className="font-medium text-gray-700 mb-2">Registration Summary</h4>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div className="text-gray-600">Patient Name:</div>
+                <div className="font-medium">{formData.name || "-"}</div>
+                
+                <div className="text-gray-600">Age/Gender:</div>
+                <div className="font-medium">{formData.age || "-"} / {formData.gender || "-"}</div>
+                
+                <div className="text-gray-600">Contact:</div>
+                <div className="font-medium">{formData.contactNumber || "-"}</div>
+                
+                <div className="text-gray-600">Appointment:</div>
+                <div className="font-medium">{formData.opdSlot || "-"}</div>
+                
+                <div className="text-gray-600">Token Number:</div>
+                <div className="font-medium">#{formData.tokenNumber}</div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Form Navigation Buttons */}
+        <div className="flex justify-between pt-4 mt-6 border-t">
+          <button
+            type="button"
+            onClick={moveToPreviousStep}
+            disabled={currentStep === "personal"}
+            className={`px-4 py-2 rounded ${
+              currentStep === "personal"
+                ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
+            }`}
+          >
+            Previous
+          </button>
+          
+          {currentStep !== "appointment" ? (
+            <button
+              type="button"
+              onClick={moveToNextStep}
+              disabled={!validateStep(currentStep)}
+              className={`px-4 py-2 rounded ${
+                validateStep(currentStep)
+                  ? "bg-blue-500 text-white hover:bg-blue-600"
+                  : "bg-blue-300 text-white cursor-not-allowed"
+              }`}
+            >
+              Next
+            </button>
+          ) : (
+            <button
+              type="submit"
+              disabled={!validateStep(currentStep) || isSubmitting}
+              className={`px-4 py-2 rounded ${
+                validateStep(currentStep) && !isSubmitting
+                  ? "bg-green-500 text-white hover:bg-green-600"
+                  : "bg-green-300 text-white cursor-not-allowed"
+              }`}
+            >
+              {isSubmitting ? (
+                "Processing..."
+              ) : isComplete ? (
+                "Registration Complete!"
+              ) : (
+                "Submit Registration"
+              )}
+            </button>
+          )}
+        </div>
+      </form>
+    </div>
+  );
+};
+
+export default PatientForm;
